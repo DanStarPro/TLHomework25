@@ -1,13 +1,13 @@
-﻿using System;
-
-class Program
+﻿using System.Globalization;
+namespace OrderManager;
+internal static class Program
 {
-    static void Main()
+    private static void Main()
     {
         RunOrder();
     }
 
-    static void RunOrder()
+    private static void RunOrder()
     {
         Console.WriteLine( "O Z O N" );
 
@@ -19,65 +19,79 @@ class Program
         ConfirmOrder( name, product, count, address );
     }
 
-    static string GetUserName()
+    private static string GetUserName()
     {
         string name = GetInput( "Введите ваше имя: " );
         Console.WriteLine( $"Привет, {name}!" );
         return name;
     }
 
-    static string GetProductName()
+    private static string GetProductName()
     {
         return GetInput( "Введите товар: " );
     }
 
-    static int GetProductCount()
+    private static int GetProductCount()
     {
-        int count;
         while ( true )
         {
             Console.Write( "Введите количество: " );
-            if ( int.TryParse( Console.ReadLine(), out count ) && count > 0 )
+            if ( int.TryParse( Console.ReadLine(), out int count ) && count > 0 )
+            {
+
                 return count;
+            }
 
             Console.WriteLine( "Ошибка: введите число больше нуля!" );
         }
     }
 
-    static string GetDeliveryAddress()
+    private static string GetDeliveryAddress()
     {
         return GetInput( "Введите адрес доставки: " );
     }
 
-    static void ConfirmOrder( string name, string product, int count, string address )
+    private static void ConfirmOrder( string name, string product, int count, string address )
     {
-        Console.WriteLine( $"{name}, вы заказали {count} {product} на адрес {address}. Все верно? (да/нет)" );
+        while ( true ) 
+        {
+            Console.WriteLine( $"{name}, вы заказали {count} {product} на адрес {address}. Все верно? (да/нет)" );
+            string answer = Console.ReadLine()?.Trim().ToLower();
 
-        if ( Console.ReadLine().ToLower() == "да" )
-        {
-            DateTime today = DateTime.Now;
-            Console.WriteLine( $"{name}, ваш заказ оформлен! Доставка по адресу {address} ожидается к {today.Day + 3} июля." );
-        }
-        else
-        {
-            Console.WriteLine( "Начнем заново...\n" );
-            RunOrder();
+            switch ( answer )
+            {
+                case "да":
+                    DateTime deliveryDate = DateTime.Now.AddDays( 3 );
+                    string formattedDate = deliveryDate.ToString( "d MMMM yyyy г.", CultureInfo.GetCultureInfo( "ru-RU" ) );
+                    Console.WriteLine( $"{name}, ваш заказ оформлен! Доставка по адресу {address} ожидается к {formattedDate}" );
+                    return;
+
+                case "нет":
+                    Console.WriteLine( "Начнем заново...\n" );
+                    RunOrder();
+                    return;
+
+                case null:
+                default:
+                    Console.WriteLine( "Введено неправильное значение! Попробуйте еще раз." );
+                    break;
+            }
         }
     }
 
-    static string GetInput( string message )
+    private static string GetInput( string message )
     {
-        string input;
-        do
+        while ( true )
         {
             Console.Write( message );
-            input = Console.ReadLine()?.Trim();
+            string? input = Console.ReadLine()?.Trim();
 
-            if ( string.IsNullOrEmpty( input ) )
-                Console.WriteLine( "Ошибка: поле не может быть пустым!" );
+            if ( !string.IsNullOrEmpty( input ) )
+            {
+                return input;
+            }
 
-        } while ( string.IsNullOrEmpty( input ) );
-
-        return input;
+            Console.WriteLine( "Ошибка: поле не может быть пустым!" );
+        }
     }
 }
