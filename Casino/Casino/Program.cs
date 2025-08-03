@@ -1,93 +1,155 @@
 ﻿using Casino;
 
-const string GameName = @"
-  ###    ###    ###   ###  #    #   ###
- #   #  #   #  #   #   #   ##   #  #   #      
- #      #   #  #       #   # #  #  #   #      
- #      #####   ###    #   #  # #  #   #
- #      #   #      #   #   #  # #  #   #      
- #   #  #   #  #   #   #   #   ##  #   #      
-  ###   #   #   ###   ###  #    #   ###
-";
+namespace CasinoProgram;
 
-PrintGameName(GameName);
-Console.Write("Здравствуйте, Вас приветствует платформа Casino. \nВведите, пожалуйста, Ваш баланс: ");
-string balanceStr = Console.ReadLine();
-bool isBalancedParced = int.TryParse(balanceStr, out int balance);
-if (!isBalancedParced)
+internal static class Program
 {
-    Console.WriteLine($"Введено неверное значение баланса: {balanceStr}");
-    return;
-}
+    private const string GameName = @"
+          ###    ###    ###   ###  #    #   ###
+         #   #  #   #  #   #   #   ##   #  #   #      
+         #      #   #  #       #   # #  #  #   #      
+         #      #####   ###    #   #  # #  #   #
+         #      #   #      #   #   #  # #  #   #      
+         #   #  #   #  #   #   #   #   ##  #   #      
+          ###   #   #   ###   ###  #    #   ###
+        ";
 
-ShowMenu(ref balance); 
+    private static int balance;
 
-static void PrintGameName(string GameName)
-{
-    Console.WriteLine(GameName);
-    Console.WriteLine();
-}
-
-static void ShowMenu(ref int balance) 
-{
-    while (true)
+    private static void Main()
     {
-        Console.WriteLine("\nВыберите действие:");
-        Console.WriteLine($"{(int)Operation.CheckBalance} - Проверить баланс");
-        Console.WriteLine($"{(int)Operation.PlayGame} - Сделать ставку");
-        Console.WriteLine($"{(int)Operation.Exit} - Выйти");
+        PrintGameName( GameName );
+        InitializeBalance();
+        ShowMenu();
+    }
 
-        if (int.TryParse(Console.ReadLine(), out int choice) && Enum.IsDefined(typeof(Operation), choice))
+    private static void PrintGameName( string gameArt )
+    {
+        Console.WriteLine( gameArt );
+        Console.WriteLine();
+    }
+
+    private static void InitializeBalance()
+    {
+        Console.Write( "Здравствуйте, Вас приветствует платформа Casino.\nВведите, пожалуйста, Ваш баланс: " );
+
+        while ( true )
         {
-            switch ((Operation)choice)
+            string balanceStr = Console.ReadLine();
+            if ( int.TryParse( balanceStr, out balance ) && balance >= 0 )
             {
-                case Operation.CheckBalance:
-                    ShowBalance(balance);
-                    break;
-                case Operation.PlayGame:
-                    PlayGame(ref balance); 
-                    break;
-                case Operation.Exit:
-                    return;
+                break;
             }
+
+            Console.WriteLine( $"Введено неверное значение баланса: {balanceStr}. Попробуйте еще раз:" );
+        }
+    }
+
+    private static void ShowMenu()
+    {
+        while ( true )
+        {
+            Console.WriteLine( "\nВыберите действие:" );
+            Console.WriteLine( $"{( int )Operation.CheckBalance} - Проверить баланс" );
+            Console.WriteLine( $"{( int )Operation.PlayGame} - Сделать ставку" );
+            Console.WriteLine( $"{( int )Operation.Exit} - Выйти" );
+
+            if ( int.TryParse( Console.ReadLine(), out int choice ) && Enum.IsDefined( typeof( Operation ), choice ) )
+            {
+                ProcessChoice( ( Operation )choice );
+
+                if ( ( Operation )choice == Operation.Exit )
+                {
+                    break;
+                }
+            }
+            else
+            {
+                Console.WriteLine( "Ошибка: неверный выбор!" );
+            }
+        }
+    }
+
+    private static void ProcessChoice( Operation choice )
+    {
+        switch ( choice )
+        {
+            case Operation.CheckBalance:
+                ShowBalance();
+                break;
+            case Operation.PlayGame:
+                PlayGame();
+                break;
+            case Operation.Exit:
+                Console.WriteLine( "Спасибо за игру! До свидания!" );
+                break;
+        }
+    }
+
+    private static void ShowBalance()
+    {
+        Console.WriteLine( $"\nВаш текущий баланс: {balance} мрот." );
+    }
+
+    private static void PlayGame()
+    {
+        if ( balance <= 0 )
+        {
+            ZeroBalance();
+            return;
+        }
+
+        Console.Write( $"\nВведите ставку (макс {balance} мрот.): " );
+
+        if ( !int.TryParse( Console.ReadLine(), out int bet ) || bet <= 0 || bet > balance )
+        {
+            Console.WriteLine( "Некорректная ставка!" );
+            return;
+        }
+
+        const int multiplicator = 1;
+        int randomNum = Random.Shared.Next( 1, 21 );
+        Console.WriteLine( $"Выпало число: {randomNum}" );
+
+        if ( randomNum >= 18 )
+        {
+            int win = bet * ( 1 + ( multiplicator * randomNum % 17 ) );
+            balance += win;
+            Console.WriteLine( $"Поздравляем! Вы выиграли {win} мрот.!" );
         }
         else
         {
-            Console.WriteLine("Ошибка: неверный выбор!");
+            balance -= bet;
+            Console.WriteLine( $"Вы проиграли {bet} мрот." );
+        }
+
+        if ( balance <= 0 )
+        {
+            ZeroBalance();
         }
     }
-}
-
-static void ShowBalance(int balance)
-{
-    Console.WriteLine($"\nВаш текущий баланс: {balance} мрот.");
-}
-
-static void PlayGame(ref int balance) 
-{
-    Console.Write($"\nВведите ставку (макс {balance} мрот.): ");
-    string betStr = Console.ReadLine();
-    bool isBetParced = int.TryParse(betStr, out int bet);
-    if (!isBetParced || bet <= 0 || bet > balance)
+    private static void ZeroBalance()
     {
-        Console.WriteLine("Некорректная ставка!");
-        return;
-    }
+        Console.WriteLine( "У вас закончились деньги!" );
+        Console.WriteLine( "1 - Пополнить баланс" );
+        Console.WriteLine( "2 - Выйти из игры" );
 
-    const int multiplicator = 1;
-    Random rnd = new Random();
-    int random_num = rnd.Next(1, 21);
-    Console.WriteLine($"Выпало число: {random_num}");
-
-    if (random_num >= 18)
-    {
-        int win = bet * (1 + (multiplicator * random_num % 17));
-        balance += win;
-        Console.WriteLine($"Поздравляем! Вы выиграли {win} мрот.!");
-    }
-    else
-    {
-        balance -= bet;
-        Console.WriteLine($"Вы проиграли {bet} мрот.");
+        while ( true )
+        {
+            string input = Console.ReadLine();
+            switch ( input )
+            {
+                case "1":
+                    InitializeBalance();
+                    return;
+                case "2":
+                    Console.WriteLine( "Спасибо за игру! До свидания!" );
+                    Environment.Exit( 0 );
+                    break;
+                default:
+                    Console.WriteLine( "Неверный выбор! Введите 1 или 2" );
+                    break;
+            }
+        }
     }
 }
